@@ -10,7 +10,7 @@ export class RebaseHelper {
     this.git = git
   }
 
-  async rebase(pull: Pull): Promise<boolean> {
+  async rebase(pull: Pull): Promise<RebaseResultMessage> {
     core.info(
       `Attempting rebase of head ref '${pull.headRef}' at '${pull.headRepoName}'.`
     )
@@ -58,9 +58,16 @@ export class RebaseHelper {
       ])
       core.endGroup()
       core.info(`Head ref '${pull.headRef}' successfully rebased.`)
-      return true
+      return new RebaseResultMessage(
+        true,
+        `Head ref '${pull.headRef}' successfully rebased.`
+      )
     } else if (result == RebaseResult.AlreadyUpToDate) {
       core.info(
+        `Head ref '${pull.headRef}' is already up to date with the base.`
+      )
+      return new RebaseResultMessage(
+        true,
         `Head ref '${pull.headRef}' is already up to date with the base.`
       )
     } else if (result == RebaseResult.Failed) {
@@ -71,7 +78,10 @@ export class RebaseHelper {
       await this.git.exec(['rebase', '--abort'], true)
     }
 
-    return false
+    return new RebaseResultMessage(
+      false,
+      `Unknown result of rebasing '${pull.headRef}'.`
+    )
   }
 
   private async log1(options: string[]): Promise<string> {
@@ -91,6 +101,16 @@ export class RebaseHelper {
     } catch {
       return RebaseResult.Failed
     }
+  }
+}
+
+export class RebaseResultMessage {
+  result: boolean
+  message: string
+
+  constructor(result: boolean, message: string) {
+    this.result = result
+    this.message = message
   }
 }
 

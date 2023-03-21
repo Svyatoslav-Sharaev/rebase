@@ -53,9 +53,14 @@ async function run(): Promise<void> {
       const git = await GitCommandManager.create(sourceSettings.repositoryPath)
       const rebaseHelper = new RebaseHelper(git)
       let rebasedCount = 0
+      const errorMessages = new Array<string>()
       for (const pull of pulls) {
         const result = await rebaseHelper.rebase(pull)
-        if (result) rebasedCount++
+        if (result.result) {
+          rebasedCount++
+          continue
+        }
+        errorMessages.push(result.message)
       }
 
       // Output count of successful rebases
@@ -64,6 +69,9 @@ async function run(): Promise<void> {
       // Delete the repository
       core.debug(`Removing repo at '${sourceSettings.repositoryPath}'`)
       await io.rmRF(sourceSettings.repositoryPath)
+      if (errorMessages.length > 0) {
+        core.setFailed(`There are failed rebase attempts: '${errorMessages}'`)
+      }
     } else {
       core.info('No pull requests found.')
     }
