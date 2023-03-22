@@ -77,7 +77,7 @@ export class RebaseHelper {
       // Try to abort any in-progress rebase
       await this.git.exec(['rebase', '--abort'], true)
       return new RebaseResultMessage(
-        true,
+        false,
         `Rebase of head ref '${pull.headRef}' failed. Conflicts must be resolved manually.`
       )
     }
