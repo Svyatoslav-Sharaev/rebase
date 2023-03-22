@@ -420,22 +420,22 @@ function run() {
                 const git = yield git_command_manager_1.GitCommandManager.create(sourceSettings.repositoryPath);
                 const rebaseHelper = new rebase_helper_1.RebaseHelper(git);
                 let rebasedCount = 0;
-                const errorMessages = new Array();
+                const failedBranches = new Array();
                 for (const pull of pulls) {
                     const result = yield rebaseHelper.rebase(pull);
                     if (result.result) {
                         rebasedCount++;
                         continue;
                     }
-                    errorMessages.push(result.message);
+                    failedBranches.push(result.branch);
                 }
                 // Output count of successful rebases
                 core.setOutput('rebased-count', rebasedCount);
                 // Delete the repository
                 core.debug(`Removing repo at '${sourceSettings.repositoryPath}'`);
                 yield io.rmRF(sourceSettings.repositoryPath);
-                if (errorMessages.length > 0) {
-                    core.setFailed(`There are failed rebase attempts: '${errorMessages}'`);
+                if (failedBranches.length > 0) {
+                    core.setFailed(`There are failed rebase attempts on branches: '${failedBranches.join(', ')}'`);
                 }
             }
             else {
@@ -629,7 +629,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.RebaseResultMessage = exports.RebaseHelper = void 0;
+exports.RebaseResultResponse = exports.RebaseHelper = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const uuid_1 = __nccwpck_require__(5840);
 class RebaseHelper {
@@ -672,19 +672,19 @@ class RebaseHelper {
                 ]);
                 core.endGroup();
                 core.info(`Head ref '${pull.headRef}' successfully rebased.`);
-                return new RebaseResultMessage(true, `Head ref '${pull.headRef}' successfully rebased.`);
+                return new RebaseResultResponse(true, pull.headRef);
             }
             else if (result == RebaseResult.AlreadyUpToDate) {
                 core.info(`Head ref '${pull.headRef}' is already up to date with the base.`);
-                return new RebaseResultMessage(true, `Head ref '${pull.headRef}' is already up to date with the base.`);
+                return new RebaseResultResponse(true, pull.headRef);
             }
             else if (result == RebaseResult.Failed) {
                 core.info(`Rebase of head ref '${pull.headRef}' failed. Conflicts must be resolved manually.`);
                 // Try to abort any in-progress rebase
                 yield this.git.exec(['rebase', '--abort'], true);
-                return new RebaseResultMessage(false, `Rebase of head ref '${pull.headRef}' failed. Conflicts must be resolved manually.`);
+                return new RebaseResultResponse(false, pull.headRef);
             }
-            return new RebaseResultMessage(false, `Unknown result of rebasing '${pull.headRef}'.`);
+            return new RebaseResultResponse(false, pull.headRef);
         });
     }
     log1(options) {
@@ -708,13 +708,13 @@ class RebaseHelper {
     }
 }
 exports.RebaseHelper = RebaseHelper;
-class RebaseResultMessage {
-    constructor(result, message) {
+class RebaseResultResponse {
+    constructor(result, branch) {
         this.result = result;
-        this.message = message;
+        this.branch = branch;
     }
 }
-exports.RebaseResultMessage = RebaseResultMessage;
+exports.RebaseResultResponse = RebaseResultResponse;
 var RebaseResult;
 (function (RebaseResult) {
     RebaseResult[RebaseResult["Rebased"] = 0] = "Rebased";
