@@ -10,7 +10,7 @@ export class RebaseHelper {
     this.git = git
   }
 
-  async rebase(pull: Pull): Promise<RebaseResultMessage> {
+  async rebase(pull: Pull): Promise<RebaseResultResponse> {
     core.info(
       `Attempting rebase of head ref '${pull.headRef}' at '${pull.headRepoName}'.`
     )
@@ -58,34 +58,22 @@ export class RebaseHelper {
       ])
       core.endGroup()
       core.info(`Head ref '${pull.headRef}' successfully rebased.`)
-      return new RebaseResultMessage(
-        true,
-        `Head ref '${pull.headRef}' successfully rebased.`
-      )
+      return new RebaseResultResponse(true, pull.headRef)
     } else if (result == RebaseResult.AlreadyUpToDate) {
       core.info(
         `Head ref '${pull.headRef}' is already up to date with the base.`
       )
-      return new RebaseResultMessage(
-        true,
-        `Head ref '${pull.headRef}' is already up to date with the base.`
-      )
+      return new RebaseResultResponse(true, pull.headRef)
     } else if (result == RebaseResult.Failed) {
       core.info(
         `Rebase of head ref '${pull.headRef}' failed. Conflicts must be resolved manually.`
       )
       // Try to abort any in-progress rebase
       await this.git.exec(['rebase', '--abort'], true)
-      return new RebaseResultMessage(
-        false,
-        `Rebase of head ref '${pull.headRef}' failed. Conflicts must be resolved manually.`
-      )
+      return new RebaseResultResponse(false, pull.headRef)
     }
 
-    return new RebaseResultMessage(
-      false,
-      `Unknown result of rebasing '${pull.headRef}'.`
-    )
+    return new RebaseResultResponse(false, pull.headRef)
   }
 
   private async log1(options: string[]): Promise<string> {
@@ -108,13 +96,13 @@ export class RebaseHelper {
   }
 }
 
-export class RebaseResultMessage {
+export class RebaseResultResponse {
   result: boolean
-  message: string
+  branch: string
 
-  constructor(result: boolean, message: string) {
+  constructor(result: boolean, branch: string) {
     this.result = result
-    this.message = message
+    this.branch = branch
   }
 }
 
