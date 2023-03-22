@@ -682,7 +682,7 @@ class RebaseHelper {
                 core.info(`Rebase of head ref '${pull.headRef}' failed. Conflicts must be resolved manually.`);
                 // Try to abort any in-progress rebase
                 yield this.git.exec(['rebase', '--abort'], true);
-                return new RebaseResultMessage(true, `Rebase of head ref '${pull.headRef}' failed. Conflicts must be resolved manually.`);
+                return new RebaseResultMessage(false, `Rebase of head ref '${pull.headRef}' failed. Conflicts must be resolved manually.`);
             }
             return new RebaseResultMessage(false, `Unknown result of rebasing '${pull.headRef}'.`);
         });
