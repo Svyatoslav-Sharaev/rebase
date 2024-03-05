@@ -67,7 +67,7 @@ async function run(): Promise<void> {
       core.setOutput('rebased-count', rebasedCount)
 
       // Delete the repository
-      core.debug(`Removing repo at '${sourceSettings.repositoryPath}'`)
+      core.debug(`Removing repo at  '${sourceSettings.repositoryPath}'`)
       await io.rmRF(sourceSettings.repositoryPath)
       if (failedBranches.length > 0) {
         core.setFailed(
